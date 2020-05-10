@@ -1,7 +1,7 @@
 require 'faraday'
 require 'json'
 require 'pry'
-require './database'
+require './config/database_connection'
 
 puts '======================'
 puts 'Nomes no Brasil - IBGE'
