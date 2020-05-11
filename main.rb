@@ -154,6 +154,49 @@ elsif option == '2'
   end
 
 elsif option == '3'
+  puts "\nInforme o(s) nome(s) que deseja consultar:"
+  puts "OBS: Separar os nomes por vírgula (,)"
+
+  names = gets.chomp.downcase
+  names = names.gsub(' ', '').gsub(',', '%7C')
+
+  table = Faraday.get(
+    "https://servicodados.ibge.gov.br/api/v2/censos/nomes/#{names}"
+  )
+
+  json = JSON.parse(table.body)
+
+  if json.empty?
+    puts 'Nenhum registro encontrado.'
+  else
+    decade_keys = json.map {|r| r['res'].map {|x| x['periodo'] }}.flatten.uniq
+    decade_hash = Hash[decade_keys.zip]
+
+    decade_hash.each do |key, _value|
+      decade_hash[key] = 0
+    end
+
+    final_hash = {}
+    names_array = json.map {|name_data| name_data['nome']}
+    names_array.each do |name|
+      final_hash[name] = decade_hash.clone
+    end
+
+    json.each do |name_data|
+      name_data['res'].each do |data|
+        final_hash[name_data['nome']][data['periodo']] = data['frequencia']
+      end
+    end
+
+    header = json.map { |reg| reg['nome'].rjust(15) }.join('')
+    puts "\n#{'DECADA'.rjust(10)}#{header}"
+
+    decade_keys.sort.each do |decade|
+      formatted_decade = decade.gsub('[', '').rjust(10)
+      frequencies = final_hash.map { |col| col[1][decade].to_s.rjust(15) }.join
+      puts "#{formatted_decade}#{frequencies}"
+    end
+  end
 
 elsif option == '4'
   return
